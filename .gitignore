@@ -136,3 +136,8 @@ yarn-error.log*
 
 # Kaggle
 kaggle.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3

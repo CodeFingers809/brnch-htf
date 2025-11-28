@@ -1,0 +1,2 @@
+[05:41:06] GPU Error: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, your request has 18429 input tokens. Please reduce the length of the input messages.", 'type': 'BadRequestError', 'param': None, 'code': 400}}
+[05:42:03] GPU Error: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, your request has 9303 input tokens. Please reduce the length of the input messages.", 'type': 'BadRequestError', 'param': None, 'code': 400}}
