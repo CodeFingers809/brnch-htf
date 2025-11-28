@@ -1,0 +1,109 @@
+flowchart TD
+    subgraph Input ["User Request (JSON)"]
+        Params["Parameters"]
+        P_N["n_simulations (N)"]
+        P_T["num_trades (T)"]
+        P_C["starting_capital"]
+        P_W["win_rate"]
+        P_R["risk_per_trade"]
+        P_RR["risk_reward_ratio"]
+    end
+
+    subgraph NumPy_Core ["Vectorized NumPy Core"]
+        direction TB
+        
+        Gen_Outcomes["1. Generate Outcomes
+        np.random.choice([1, 0])"]
+        
+        Matrix_Outcomes[("Outcomes Matrix
+        (0s and 1s)
+        Size: N x T")]
+        
+        Calc_Mult["2. Calculate Multipliers
+        Win: 1 + (risk * rr)
+        Loss: 1 - risk"]
+        
+        Matrix_Mult[("Multipliers Matrix
+        (Floats)
+        Size: N x T")]
+        
+        Calc_CumProd["3. Cumulative Product
+        np.cumprod(axis=1) * starting_capital"]
+        
+        Matrix_Equity[("Equity Curves Matrix
+        (Account Balance over Time)
+        Size: N x T")]
+        
+        Add_Start["4. Prepend Starting Capital"]
+        
+        Matrix_Full_Equity[("Full Equity Curves
+        Size: N x (T + 1)")]
+    end
+
+    subgraph Analysis ["Statistical Analysis & Reduction"]
+        direction TB
+        
+        Slice_Final["Slice Last Column
+        final_equities = data[:, -1]
+        Size: (N,)"]
+        
+        Calc_Stats["Calculate Aggregates
+        Mean, Median, StdDev, ROI,
+        Win/Ruin Probabilities"]
+        
+        Calc_DD["Calculate Drawdowns
+        Running Max -> (Val - Max) / Max
+        Size: N x (T + 1)"]
+        
+        Reduce_DD["Reduce Drawdowns
+        Min per simulation (Max DD)
+        Size: (N,) -> Mean/Worst/Median"]
+        
+        Calc_Perc["Calculate Percentiles
+        np.percentile(axis=0)
+        [5th, 25th, 50th, 75th, 95th]"]
+        
+        Matrix_Perc[("Percentile Curves
+        Size: 5 x (T + 1)")]
+        
+        Extremes["Identify Best/Worst Paths
+        argmax/argmin of final_equities"]
+    end
+
+    subgraph Output ["Response (JSON)"]
+        JSON["Final JSON Object"]
+    end
+
+    %% Connections
+    Params --> Gen_Outcomes
+    P_N -.-> Matrix_Outcomes
+    P_T -.-> Matrix_Outcomes
+    
+    Gen_Outcomes --> Matrix_Outcomes
+    Matrix_Outcomes --> Calc_Mult
+    P_R --> Calc_Mult
+    P_RR --> Calc_Mult
+    
+    Calc_Mult --> Matrix_Mult
+    Matrix_Mult --> Calc_CumProd
+    P_C --> Calc_CumProd
+    
+    Calc_CumProd --> Matrix_Equity
+    Matrix_Equity --> Add_Start
+    Add_Start --> Matrix_Full_Equity
+    
+    Matrix_Full_Equity --> Slice_Final
+    Slice_Final --> Calc_Stats
+    
+    Matrix_Full_Equity --> Calc_DD
+    Calc_DD --> Reduce_DD
+    
+    Matrix_Full_Equity --> Calc_Perc
+    Calc_Perc --> Matrix_Perc
+    
+    Matrix_Full_Equity --> Extremes
+    
+    Calc_Stats --> JSON
+    Reduce_DD --> JSON
+    Matrix_Perc --> JSON
+    Extremes --> JSON
