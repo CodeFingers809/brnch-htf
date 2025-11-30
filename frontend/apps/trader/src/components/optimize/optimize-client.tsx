@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TerminalLayout } from "@/components/layout/terminal-layout";
 import { Badge } from "@/components/ui/badge";
+import { StockSearch } from "@/components/ui/stock-search";
 import { cn } from "@/lib/utils/cn";
 import type {
     OptimizeResponse,
@@ -87,6 +88,67 @@ const STRATEGY_INFO = {
 
 type StrategyKey = keyof typeof STRATEGY_INFO;
 
+function RecommendationCard({
+    recommendation,
+}: {
+    recommendation: Recommendation;
+}) {
+    const iconMap = {
+        strategy: {
+            icon: Sparkles,
+            color: "#6c8cff",
+            bgColor: "bg-[#6c8cff]/10",
+            borderColor: "border-[#6c8cff]/30",
+        },
+        warning: {
+            icon: AlertTriangle,
+            color: "#f0b86c",
+            bgColor: "bg-[#f0b86c]/10",
+            borderColor: "border-[#f0b86c]/30",
+        },
+        positive: {
+            icon: CheckCircle,
+            color: "#3dd68c",
+            bgColor: "bg-[#3dd68c]/10",
+            borderColor: "border-[#3dd68c]/30",
+        },
+        insight: {
+            icon: Lightbulb,
+            color: "#c96cff",
+            bgColor: "bg-[#c96cff]/10",
+            borderColor: "border-[#c96cff]/30",
+        },
+    };
+
+    const config = iconMap[recommendation.type];
+    const Icon = config.icon;
+
+    return (
+        <div
+            className={cn(
+                "p-3 rounded-xl border",
+                config.bgColor,
+                config.borderColor
+            )}
+        >
+            <div className="flex items-start gap-2">
+                <Icon
+                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                    style={{ color: config.color }}
+                />
+                <div>
+                    <p className="text-xs font-medium text-[#e8eaed] mb-1">
+                        {recommendation.title}
+                    </p>
+                    <p className="text-[10px] text-[#8b8f9a] leading-relaxed">
+                        {recommendation.description}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function OptimizeClient() {
     const [tickers, setTickers] = useState<string[]>([
         "RELIANCE.NS",
@@ -133,10 +195,10 @@ export function OptimizeClient() {
         mutation.mutate();
     };
 
-    const addSymbol = () => {
-        const symbol = newSymbol.trim().toUpperCase();
-        if (symbol && !tickers.includes(symbol)) {
-            setTickers([...tickers, symbol]);
+    const addSymbol = (symbol?: string) => {
+        const sym = (symbol || newSymbol).trim().toUpperCase();
+        if (sym && !tickers.includes(sym)) {
+            setTickers([...tickers, sym]);
             setNewSymbol("");
         }
     };
@@ -248,59 +310,17 @@ export function OptimizeClient() {
                                                 Stocks to Optimize (min. 2)
                                             </label>
 
-                                            {/* Selected Stocks */}
-                                            <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-[#1a1d24] border border-[#2d303a]/50 min-h-[44px]">
-                                                {tickers.length === 0 ? (
-                                                    <span className="text-xs text-[#8b8f9a]">
-                                                        No stocks selected
-                                                    </span>
-                                                ) : (
-                                                    tickers.map((symbol) => (
-                                                        <button
-                                                            key={symbol}
-                                                            onClick={() =>
-                                                                removeSymbol(
-                                                                    symbol
-                                                                )
-                                                            }
-                                                            className="group flex items-center gap-1.5 px-2.5 py-1 bg-[#0c0d10] border border-[#2d303a]/50 rounded-lg hover:border-[#f06c6c] transition-all duration-200"
-                                                        >
-                                                            <span className="text-xs text-[#e8eaed]">
-                                                                {symbol}
-                                                            </span>
-                                                            <X className="h-3 w-3 text-[#8b8f9a] group-hover:text-[#f06c6c]" />
-                                                        </button>
-                                                    ))
-                                                )}
-                                            </div>
-
-                                            {/* Add Stock Input */}
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    placeholder="Add stock symbol (e.g., RELIANCE.NS)"
-                                                    value={newSymbol}
-                                                    onChange={(e) =>
-                                                        setNewSymbol(
-                                                            e.target.value.toUpperCase()
-                                                        )
-                                                    }
-                                                    onKeyDown={(e) =>
-                                                        e.key === "Enter" &&
-                                                        addSymbol()
-                                                    }
-                                                    className="h-10 text-sm bg-[#1a1d24] border-[#2d303a]/50 text-[#e8eaed] placeholder:text-[#8b8f9a] focus:border-[#6c8cff] focus:ring-1 focus:ring-[#6c8cff]/20"
-                                                />
-                                                <Button
-                                                    onClick={addSymbol}
-                                                    size="sm"
-                                                    className="h-10 px-4 bg-[#6c8cff] hover:bg-[#5c7ce8]"
-                                                >
-                                                    <Plus className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                            {/* Stock Search with Selected Badges */}
+                                            <StockSearch
+                                                onSelect={addSymbol}
+                                                placeholder="Search and add stocks (e.g., RELIANCE.NS)"
+                                                selectedStocks={tickers}
+                                                showSelectedBadges={true}
+                                                onRemove={removeSymbol}
+                                            />
 
                                             {/* Stock Suggestions */}
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-2 mt-2">
                                                 {STOCK_SUGGESTIONS.filter(
                                                     (s) => !tickers.includes(s)
                                                 ).map((symbol) => (
@@ -456,6 +476,16 @@ export function OptimizeClient() {
                                         <DollarSign className="h-3 w-3 mr-1" />
                                         {formatCurrency(result.input.capital)}
                                     </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-[#1a1d24] border-[#2d303a]/50 text-[#8b8f9a]"
+                                    >
+                                        <Activity className="h-3 w-3 mr-1" />
+                                        {
+                                            result.input.trading_days_analyzed
+                                        }{" "}
+                                        trading days
+                                    </Badge>
                                 </div>
                                 <Button
                                     onClick={() => setResult(null)}
@@ -466,6 +496,21 @@ export function OptimizeClient() {
                                     New Optimization
                                 </Button>
                             </div>
+
+                            {/* Recommendations Section */}
+                            {result.recommendations &&
+                                result.recommendations.length > 0 && (
+                                    <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                        {result.recommendations.map(
+                                            (rec, idx) => (
+                                                <RecommendationCard
+                                                    key={idx}
+                                                    recommendation={rec}
+                                                />
+                                            )
+                                        )}
+                                    </div>
+                                )}
 
                             {/* Strategy Selector */}
                             <div className="grid grid-cols-4 gap-3 mb-6">
@@ -478,6 +523,12 @@ export function OptimizeClient() {
                                     const Icon = info.icon;
                                     const portfolio = result.portfolios[key];
                                     const isSelected = selectedStrategy === key;
+                                    const isBestSharpe =
+                                        result.strategy_comparison
+                                            ?.best_sharpe === key;
+                                    const isLowestRisk =
+                                        result.strategy_comparison
+                                            ?.lowest_risk === key;
                                     return (
                                         <button
                                             key={key}
@@ -485,12 +536,28 @@ export function OptimizeClient() {
                                                 setSelectedStrategy(key)
                                             }
                                             className={cn(
-                                                "p-4 rounded-xl border transition-all duration-200 text-left",
+                                                "p-4 rounded-xl border transition-all duration-200 text-left relative",
                                                 isSelected
                                                     ? "bg-[#1a1d24] border-[#6c8cff] shadow-lg"
                                                     : "bg-[#12141a] border-[#2d303a]/50 hover:border-[#6c8cff]/50"
                                             )}
                                         >
+                                            {/* Best strategy badges */}
+                                            <div className="absolute -top-2 -right-2 flex gap-1">
+                                                {isBestSharpe && (
+                                                    <span className="px-1.5 py-0.5 text-[9px] font-medium bg-[#3dd68c] text-black rounded-full flex items-center gap-0.5">
+                                                        <Crown className="h-2.5 w-2.5" />{" "}
+                                                        Best
+                                                    </span>
+                                                )}
+                                                {isLowestRisk &&
+                                                    !isBestSharpe && (
+                                                        <span className="px-1.5 py-0.5 text-[9px] font-medium bg-[#6c8cff] text-white rounded-full flex items-center gap-0.5">
+                                                            <Shield className="h-2.5 w-2.5" />{" "}
+                                                            Safest
+                                                        </span>
+                                                    )}
+                                            </div>
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Icon
                                                     className="h-4 w-4"
@@ -533,6 +600,17 @@ export function OptimizeClient() {
                                                     )}
                                                 </span>
                                             </div>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <span className="text-xs text-[#8b8f9a]">
+                                                    Max DD
+                                                </span>
+                                                <span className="text-sm font-semibold text-[#f06c6c]">
+                                                    {formatPercent(
+                                                        portfolio.metrics
+                                                            .max_drawdown
+                                                    )}
+                                                </span>
+                                            </div>
                                         </button>
                                     );
                                 })}
@@ -547,7 +625,7 @@ export function OptimizeClient() {
                                             <BarChart3 className="h-4 w-4 text-[#6c8cff]" />
                                             Portfolio Metrics
                                         </h3>
-                                        <div className="space-y-4">
+                                        <div className="space-y-3">
                                             <div className="flex items-center justify-between p-3 rounded-lg bg-[#1a1d24]">
                                                 <div className="flex items-center gap-2">
                                                     <TrendingUp className="h-4 w-4 text-[#3dd68c]" />
@@ -597,9 +675,178 @@ export function OptimizeClient() {
                                                     )}
                                                 </span>
                                             </div>
+                                            <div className="flex items-center justify-between p-3 rounded-lg bg-[#1a1d24]">
+                                                <div className="flex items-center gap-2">
+                                                    <ArrowDownRight className="h-4 w-4 text-[#f06c6c]" />
+                                                    <span className="text-xs text-[#8b8f9a]">
+                                                        Max Drawdown
+                                                    </span>
+                                                </div>
+                                                <span className="text-lg font-bold text-[#f06c6c]">
+                                                    {formatPercent(
+                                                        currentPortfolio.metrics
+                                                            .max_drawdown
+                                                    )}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
+                                    {/* Risk Analysis Card */}
+                                    <div className="rounded-xl bg-[#12141a] border border-[#2d303a]/50 p-5">
+                                        <h3 className="text-sm font-medium text-[#e8eaed] mb-4 flex items-center gap-2">
+                                            <Shield className="h-4 w-4 text-[#6c8cff]" />
+                                            Risk Analysis
+                                        </h3>
+                                        <div className="space-y-3">
+                                            <div className="p-3 rounded-lg bg-[#1a1d24]">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs text-[#8b8f9a]">
+                                                        VaR (95%)
+                                                    </span>
+                                                    <span className="text-sm font-semibold text-[#f06c6c]">
+                                                        {formatPercent(
+                                                            currentPortfolio
+                                                                .metrics.var_95
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-[#8b8f9a]">
+                                                    95% chance daily loss
+                                                    won&apos;t exceed this
+                                                </p>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-[#1a1d24]">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs text-[#8b8f9a]">
+                                                        CVaR (95%)
+                                                    </span>
+                                                    <span className="text-sm font-semibold text-[#f06c6c]">
+                                                        {formatPercent(
+                                                            currentPortfolio
+                                                                .metrics.cvar_95
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-[#8b8f9a]">
+                                                    Expected loss in worst 5%
+                                                    scenarios
+                                                </p>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-[#1a1d24]">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs text-[#8b8f9a]">
+                                                        Diversification Ratio
+                                                    </span>
+                                                    <span
+                                                        className={cn(
+                                                            "text-sm font-semibold",
+                                                            currentPortfolio
+                                                                .metrics
+                                                                .diversification_ratio >
+                                                                1.2
+                                                                ? "text-[#3dd68c]"
+                                                                : "text-[#f0b86c]"
+                                                        )}
+                                                    >
+                                                        {currentPortfolio.metrics.diversification_ratio.toFixed(
+                                                            2
+                                                        )}
+                                                        x
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-[#8b8f9a]">
+                                                    {currentPortfolio.metrics
+                                                        .diversification_ratio >
+                                                    1.2
+                                                        ? "Good diversification benefits"
+                                                        : "Limited diversification"}
+                                                </p>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-[#1a1d24]">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs text-[#8b8f9a]">
+                                                        Effective # of Assets
+                                                    </span>
+                                                    <span className="text-sm font-semibold text-[#e8eaed]">
+                                                        {currentPortfolio.metrics.effective_assets.toFixed(
+                                                            1
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-[#8b8f9a]">
+                                                    {currentPortfolio.insights
+                                                        .is_concentrated
+                                                        ? "Concentrated portfolio"
+                                                        : "Well-spread allocation"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Allocation Card */}
+                                    <div className="rounded-xl bg-[#12141a] border border-[#2d303a]/50 p-5">
+                                        <h3 className="text-sm font-medium text-[#e8eaed] mb-4 flex items-center gap-2">
+                                            <DollarSign className="h-4 w-4 text-[#6c8cff]" />
+                                            Capital Allocation
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {Object.entries(
+                                                currentPortfolio.allocation
+                                            )
+                                                .sort((a, b) => b[1] - a[1])
+                                                .map(([ticker, amount]) => {
+                                                    const isTopHolding =
+                                                        ticker ===
+                                                        currentPortfolio
+                                                            .insights
+                                                            .top_holding.ticker;
+                                                    return (
+                                                        <div
+                                                            key={ticker}
+                                                            className={cn(
+                                                                "flex items-center justify-between p-2 rounded-lg",
+                                                                isTopHolding
+                                                                    ? "bg-[#6c8cff]/10 border border-[#6c8cff]/30"
+                                                                    : "bg-[#1a1d24]"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                {isTopHolding && (
+                                                                    <Crown className="h-3 w-3 text-[#6c8cff]" />
+                                                                )}
+                                                                <span className="text-xs text-[#e8eaed]">
+                                                                    {ticker}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-[#3dd68c]">
+                                                                {formatCurrency(
+                                                                    amount
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-[#2d303a]/50">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-[#8b8f9a]">
+                                                    Total
+                                                </span>
+                                                <span className="text-sm font-bold text-[#e8eaed]">
+                                                    {formatCurrency(
+                                                        result.input.capital
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Weights and Risk Contribution Row */}
+                            {currentPortfolio && (
+                                <div className="mt-6 grid grid-cols-2 gap-6">
                                     {/* Weights Card */}
                                     <div className="rounded-xl bg-[#12141a] border border-[#2d303a]/50 p-5">
                                         <h3 className="text-sm font-medium text-[#e8eaed] mb-4 flex items-center gap-2">
@@ -641,45 +888,58 @@ export function OptimizeClient() {
                                         </div>
                                     </div>
 
-                                    {/* Allocation Card */}
+                                    {/* Risk Contribution Card */}
                                     <div className="rounded-xl bg-[#12141a] border border-[#2d303a]/50 p-5">
                                         <h3 className="text-sm font-medium text-[#e8eaed] mb-4 flex items-center gap-2">
-                                            <DollarSign className="h-4 w-4 text-[#6c8cff]" />
-                                            Capital Allocation
+                                            <Scale className="h-4 w-4 text-[#f0b86c]" />
+                                            Risk Contribution
                                         </h3>
                                         <div className="space-y-2">
-                                            {Object.entries(
-                                                currentPortfolio.allocation
-                                            )
-                                                .sort((a, b) => b[1] - a[1])
-                                                .map(([ticker, amount]) => (
-                                                    <div
-                                                        key={ticker}
-                                                        className="flex items-center justify-between p-2 rounded-lg bg-[#1a1d24]"
-                                                    >
-                                                        <span className="text-xs text-[#e8eaed]">
-                                                            {ticker}
-                                                        </span>
-                                                        <span className="text-sm font-semibold text-[#3dd68c]">
-                                                            {formatCurrency(
-                                                                amount
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                        </div>
-                                        <div className="mt-4 pt-3 border-t border-[#2d303a]/50">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs text-[#8b8f9a]">
-                                                    Total
-                                                </span>
-                                                <span className="text-sm font-bold text-[#e8eaed]">
-                                                    {formatCurrency(
-                                                        result.input.capital
+                                            {currentPortfolio.risk_contribution &&
+                                                Object.entries(
+                                                    currentPortfolio.risk_contribution
+                                                )
+                                                    .sort((a, b) => b[1] - a[1])
+                                                    .map(
+                                                        ([
+                                                            ticker,
+                                                            riskContrib,
+                                                        ]) => (
+                                                            <div
+                                                                key={ticker}
+                                                                className="flex items-center gap-3"
+                                                            >
+                                                                <span className="text-xs text-[#e8eaed] w-28 truncate">
+                                                                    {ticker}
+                                                                </span>
+                                                                <div className="flex-1 h-2 bg-[#1a1d24] rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-[#f0b86c] rounded-full transition-all duration-500"
+                                                                        style={{
+                                                                            width: `${
+                                                                                riskContrib *
+                                                                                100
+                                                                            }%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-xs text-[#8b8f9a] w-14 text-right">
+                                                                    {(
+                                                                        riskContrib *
+                                                                        100
+                                                                    ).toFixed(
+                                                                        1
+                                                                    )}
+                                                                    %
+                                                                </span>
+                                                            </div>
+                                                        )
                                                     )}
-                                                </span>
-                                            </div>
                                         </div>
+                                        <p className="mt-3 text-[10px] text-[#8b8f9a]">
+                                            How much each asset contributes to
+                                            total portfolio risk
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -689,49 +949,209 @@ export function OptimizeClient() {
                                 <h3 className="text-sm font-medium text-[#e8eaed] mb-4 flex items-center gap-2">
                                     <BarChart3 className="h-4 w-4 text-[#6c8cff]" />
                                     Individual Asset Performance
+                                    {result.asset_insights && (
+                                        <span className="ml-auto flex items-center gap-2">
+                                            <Badge
+                                                variant="outline"
+                                                className="bg-[#3dd68c]/10 border-[#3dd68c]/30 text-[#3dd68c] text-[10px]"
+                                            >
+                                                <Crown className="h-2.5 w-2.5 mr-1" />
+                                                Best:{" "}
+                                                {
+                                                    result.asset_insights
+                                                        .best_sharpe.ticker
+                                                }
+                                            </Badge>
+                                        </span>
+                                    )}
                                 </h3>
                                 <div className="grid grid-cols-4 gap-3">
                                     {Object.entries(result.assets).map(
-                                        ([ticker, metrics]) => (
-                                            <div
-                                                key={ticker}
-                                                className="p-3 rounded-lg bg-[#1a1d24] border border-[#2d303a]/30"
-                                            >
-                                                <div className="text-sm font-medium text-[#e8eaed] mb-2">
-                                                    {ticker}
+                                        ([ticker, metrics]) => {
+                                            const isBestReturn =
+                                                result.asset_insights
+                                                    ?.best_return.ticker ===
+                                                ticker;
+                                            const isBestSharpe =
+                                                result.asset_insights
+                                                    ?.best_sharpe.ticker ===
+                                                ticker;
+                                            const isLowestVol =
+                                                result.asset_insights
+                                                    ?.lowest_volatility
+                                                    .ticker === ticker;
+                                            return (
+                                                <div
+                                                    key={ticker}
+                                                    className={cn(
+                                                        "p-3 rounded-lg border",
+                                                        isBestSharpe
+                                                            ? "bg-[#3dd68c]/5 border-[#3dd68c]/30"
+                                                            : "bg-[#1a1d24] border-[#2d303a]/30"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-sm font-medium text-[#e8eaed]">
+                                                            {ticker}
+                                                        </span>
+                                                        <div className="flex gap-1">
+                                                            {isBestReturn && (
+                                                                <span className="text-[8px] px-1.5 py-0.5 bg-[#3dd68c]/20 text-[#3dd68c] rounded">
+                                                                    TOP RETURN
+                                                                </span>
+                                                            )}
+                                                            {isBestSharpe && (
+                                                                <span className="text-[8px] px-1.5 py-0.5 bg-[#6c8cff]/20 text-[#6c8cff] rounded">
+                                                                    BEST SHARPE
+                                                                </span>
+                                                            )}
+                                                            {isLowestVol && (
+                                                                <span className="text-[8px] px-1.5 py-0.5 bg-[#c96cff]/20 text-[#c96cff] rounded">
+                                                                    STABLE
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="text-[#8b8f9a]">
+                                                            Return
+                                                        </span>
+                                                        <span
+                                                            className={cn(
+                                                                "font-semibold",
+                                                                metrics.return >=
+                                                                    0
+                                                                    ? "text-[#3dd68c]"
+                                                                    : "text-[#f06c6c]"
+                                                            )}
+                                                        >
+                                                            {formatPercent(
+                                                                metrics.return
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs mt-1">
+                                                        <span className="text-[#8b8f9a]">
+                                                            Volatility
+                                                        </span>
+                                                        <span className="font-semibold text-[#f0b86c]">
+                                                            {formatPercent(
+                                                                metrics.volatility
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs mt-1">
+                                                        <span className="text-[#8b8f9a]">
+                                                            Sharpe
+                                                        </span>
+                                                        <span className="font-semibold text-[#6c8cff]">
+                                                            {metrics.sharpe.toFixed(
+                                                                2
+                                                            )}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="text-[#8b8f9a]">
-                                                        Return
-                                                    </span>
-                                                    <span
-                                                        className={cn(
-                                                            "font-semibold",
-                                                            metrics.return >= 0
-                                                                ? "text-[#3dd68c]"
-                                                                : "text-[#f06c6c]"
-                                                        )}
-                                                    >
-                                                        {formatPercent(
-                                                            metrics.return
-                                                        )}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs mt-1">
-                                                    <span className="text-[#8b8f9a]">
-                                                        Volatility
-                                                    </span>
-                                                    <span className="font-semibold text-[#f0b86c]">
-                                                        {formatPercent(
-                                                            metrics.volatility
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )
+                                            );
+                                        }
                                     )}
                                 </div>
                             </div>
+
+                            {/* Correlation Insights */}
+                            {result.correlation_insights && (
+                                <div className="mt-6 rounded-xl bg-[#12141a] border border-[#2d303a]/50 p-5">
+                                    <h3 className="text-sm font-medium text-[#e8eaed] mb-4 flex items-center gap-2">
+                                        <Link2 className="h-4 w-4 text-[#6c8cff]" />
+                                        Correlation Insights
+                                        <Badge
+                                            variant="outline"
+                                            className="ml-auto bg-[#1a1d24] border-[#2d303a]/50 text-[#8b8f9a] text-[10px]"
+                                        >
+                                            Avg:{" "}
+                                            {(
+                                                result.correlation_insights
+                                                    .avg_correlation * 100
+                                            ).toFixed(0)}
+                                            %
+                                        </Badge>
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs text-[#8b8f9a] mb-2 flex items-center gap-1">
+                                                <CheckCircle className="h-3 w-3 text-[#3dd68c]" />
+                                                Least Correlated (Best for
+                                                Diversification)
+                                            </p>
+                                            <div className="space-y-2">
+                                                {result.correlation_insights.least_correlated.map(
+                                                    (item, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-center justify-between p-2 rounded-lg bg-[#1a1d24]"
+                                                        >
+                                                            <span className="text-xs text-[#e8eaed]">
+                                                                {item.pair[0]} ↔{" "}
+                                                                {item.pair[1]}
+                                                            </span>
+                                                            <span
+                                                                className={cn(
+                                                                    "text-xs font-semibold",
+                                                                    item.correlation <
+                                                                        0.3
+                                                                        ? "text-[#3dd68c]"
+                                                                        : "text-[#f0b86c]"
+                                                                )}
+                                                            >
+                                                                {(
+                                                                    item.correlation *
+                                                                    100
+                                                                ).toFixed(0)}
+                                                                %
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-[#8b8f9a] mb-2 flex items-center gap-1">
+                                                <AlertTriangle className="h-3 w-3 text-[#f0b86c]" />
+                                                Most Correlated (Move Together)
+                                            </p>
+                                            <div className="space-y-2">
+                                                {result.correlation_insights.most_correlated.map(
+                                                    (item, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-center justify-between p-2 rounded-lg bg-[#1a1d24]"
+                                                        >
+                                                            <span className="text-xs text-[#e8eaed]">
+                                                                {item.pair[0]} ↔{" "}
+                                                                {item.pair[1]}
+                                                            </span>
+                                                            <span
+                                                                className={cn(
+                                                                    "text-xs font-semibold",
+                                                                    item.correlation >
+                                                                        0.7
+                                                                        ? "text-[#f06c6c]"
+                                                                        : "text-[#f0b86c]"
+                                                                )}
+                                                            >
+                                                                {(
+                                                                    item.correlation *
+                                                                    100
+                                                                ).toFixed(0)}
+                                                                %
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

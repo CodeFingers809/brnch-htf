@@ -270,9 +270,29 @@ def optimize_route():
         # Clean tickers
         tickers = [t.strip().upper() for t in tickers]
         
+        print(f"Fetching data for tickers: {tickers}")
+        
         # Fetch data
         # Using 'Close' (which is auto-adjusted) for returns
-        df = yf.download(tickers, period="2y", progress=False, auto_adjust=True)['Close']
+        raw_data = yf.download(tickers, period="2y", progress=False, auto_adjust=True)
+        
+        print(f"Raw data shape: {raw_data.shape if hasattr(raw_data, 'shape') else 'N/A'}")
+        print(f"Raw data columns: {raw_data.columns.tolist() if hasattr(raw_data, 'columns') else 'N/A'}")
+        
+        # Handle different DataFrame structures based on number of tickers
+        if len(tickers) == 1:
+            # Single ticker: columns are just ['Close', 'High', 'Low', 'Open', 'Volume']
+            df = raw_data[['Close']].copy()
+            df.columns = tickers
+        elif 'Close' in raw_data.columns.get_level_values(0) if hasattr(raw_data.columns, 'get_level_values') else False:
+            # Multi-level columns when multiple tickers
+            df = raw_data['Close']
+        else:
+            # Fallback: assume single level or already processed
+            df = raw_data if isinstance(raw_data, pd.DataFrame) else pd.DataFrame(raw_data)
+        
+        print(f"Processed df shape: {df.shape}")
+        print(f"Processed df columns: {df.columns.tolist()}")
         
         # Check data availability
         if df.empty:
@@ -280,10 +300,12 @@ def optimize_route():
             
         # Handle missing data (drop cols with too many NaNs, fill forward)
         df.dropna(axis=1, how='all', inplace=True)
-        df.fillna(method='ffill', inplace=True)
-        df.dropna(inplace=True) # Drop initial rows with NaNs
+        df = df.ffill()  # Forward fill (replaces deprecated fillna(method='ffill'))
+        df.dropna(inplace=True)  # Drop initial rows with NaNs
         
         valid_tickers = df.columns.tolist()
+        print(f"Valid tickers after cleaning: {valid_tickers}")
+        
         if len(valid_tickers) < 2:
              return jsonify({'error': 'Not enough valid data for at least 2 tickers.'}), 400
         
@@ -364,8 +386,8 @@ def optimize_route():
                 },
                 "insights": {
                     "top_holding": {"ticker": top_holding[0], "weight": float(top_holding[1])},
-                    "is_concentrated": hhi > 0.5,
-                    "is_well_diversified": div_ratio > 1.2 and effective_n > len(valid_tickers) * 0.6
+                    "is_concentrated": bool(hhi > 0.5),
+                    "is_well_diversified": bool(div_ratio > 1.2 and effective_n > len(valid_tickers) * 0.6)
                 }
             }
             
@@ -425,6 +447,8 @@ def optimize_route():
         return jsonify(response)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()  # Print full traceback to console
         return jsonify({'error': str(e)}), 500
 
 def generate_recommendations(results, asset_insights, correlation_insights):

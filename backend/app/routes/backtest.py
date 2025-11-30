@@ -103,6 +103,8 @@ class BacktestResult(BaseModel):
 
 FEW_SHOT_EXAMPLES = """
 === BACKTESTING.PY STRATEGY EXAMPLES ===
+IMPORTANT: self.buy() ONLY accepts these parameters: sl (stop-loss price), tp (take-profit price), size (position size)
+DO NOT use trail_sl, trailing_stop, or any other parameters - they will cause errors!
 
 EXAMPLE 1: MACD Strategy with Signal Line Crossover
 class UserStrategy(Strategy):
@@ -133,7 +135,7 @@ class UserStrategy(Strategy):
             macd_cross_up = self.macd[-1] > self.signal[-1] and self.macd[-2] <= self.signal[-2]
             above_ema = price > self.ema50[-1]
             if macd_cross_up and above_ema:
-                self.buy(tp=price*1.05, sl=price*0.98)
+                self.buy(tp=price*1.05, sl=price*0.98)  # Only sl and tp allowed
         elif self.position:
             macd_cross_down = self.macd[-1] < self.signal[-1] and self.macd[-2] >= self.signal[-2]
             if macd_cross_down:
@@ -163,7 +165,7 @@ class UserStrategy(Strategy):
         
         if not self.position:
             if self.rsi[-1] < 30 and price > self.sma200[-1]:
-                self.buy(tp=price*1.08, sl=price*0.96)
+                self.buy(tp=price*1.08, sl=price*0.96)  # Only sl and tp allowed
         elif self.position:
             if self.rsi[-1] > 70:
                 self.position.close()
@@ -195,7 +197,7 @@ class UserStrategy(Strategy):
         
         if not self.position:
             if prev_price <= self.bb_lower[-2] and price > self.bb_lower[-1]:
-                self.buy(sl=price*0.97)
+                self.buy(sl=price*0.97, tp=price*1.06)  # Only sl and tp allowed
         elif self.position:
             if price >= self.bb_upper[-1]:
                 self.position.close()
@@ -224,7 +226,7 @@ class UserStrategy(Strategy):
             ema_cross_up = self.ema9[-1] > self.ema21[-1] and self.ema9[-2] <= self.ema21[-2]
             high_volume = volume > self.vol_avg[-1] * 1.5
             if ema_cross_up and high_volume:
-                self.buy(tp=price*1.06, sl=price*0.97)
+                self.buy(tp=price*1.06, sl=price*0.97)  # Only sl and tp allowed
         elif self.position:
             ema_cross_down = self.ema9[-1] < self.ema21[-1] and self.ema9[-2] >= self.ema21[-2]
             if ema_cross_down:
@@ -259,6 +261,7 @@ class UserStrategy(Strategy):
             breakout = price > self.sma20[-1] and self.data.Close[-2] <= self.sma20[-2]
             if breakout:
                 atr_val = self.atr[-1]
+                # Use ATR for dynamic sl/tp - ONLY sl and tp parameters allowed
                 self.buy(tp=price + 2*atr_val, sl=price - 1.5*atr_val)
         elif self.position:
             if price < self.sma20[-1]:
@@ -316,11 +319,14 @@ CRITICAL RULES:
 6. Use self.buy() for entries and self.position.close() for exits
 7. ALWAYS use stop-loss (sl=) and take-profit (tp=) in self.buy()
 8. This is LONG-ONLY - no short selling
+9. The buy() method ONLY accepts these parameters: sl (stop loss price), tp (take profit price), size (position size)
+10. DO NOT use trail_sl, trailing_stop, or any other parameters - they are NOT supported
 
 AVAILABLE DATA:
 - self.data.Open, self.data.High, self.data.Low, self.data.Close, self.data.Volume
 
-GENERATE A COMPLETE STRATEGY with all helper functions defined inside init()."""
+GENERATE A COMPLETE STRATEGY with all helper functions defined inside init().
+IMPORTANT: Only use sl= and tp= in self.buy(). Never use trail_sl or trailing parameters."""
 
 
 def get_refinement_prompt(previous_code: str, results: Dict, errors: List[str]) -> str:

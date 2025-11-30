@@ -112,6 +112,9 @@ export async function POST(request: Request) {
             );
         }
 
+        console.log("Optimize request:", parsed.data);
+        console.log("Backend URL:", BACKEND_URL);
+
         const backendResponse = await fetch(`${BACKEND_URL}/optimize`, {
             method: "POST",
             headers: {
@@ -120,8 +123,17 @@ export async function POST(request: Request) {
             body: JSON.stringify(parsed.data),
         });
 
+        console.log("Backend response status:", backendResponse.status);
+
         if (!backendResponse.ok) {
-            const errorData = await backendResponse.json().catch(() => ({}));
+            const errorText = await backendResponse.text();
+            console.error("Backend error response:", errorText);
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch {
+                errorData = { error: errorText || "Backend request failed" };
+            }
             return NextResponse.json(
                 { error: errorData.error || "Backend request failed" },
                 { status: backendResponse.status }
@@ -132,6 +144,17 @@ export async function POST(request: Request) {
         return NextResponse.json(result);
     } catch (error) {
         console.error("Optimize API error:", error);
+
+        // Check if it's a connection error
+        if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
+            return NextResponse.json(
+                {
+                    error: "Backend server is not running. Please start the Python backend.",
+                },
+                { status: 503 }
+            );
+        }
+
         return NextResponse.json(
             {
                 error:

@@ -8,8 +8,9 @@ app = create_app()
 
 if __name__ == "__main__":
     # Debug mode is on for development. Turn off in production.
+    debug_mode = os.getenv("DEBUG_MODE", "true").lower() in ("true", "1", "yes")
     app.run(
-        debug=os.getenv("DEBUG_MODE", False),
+        debug=debug_mode,
         host=os.getenv("HOST", "0.0.0.0"),
-        port=os.getenv("PORT", 3001),
+        port=int(os.getenv("PORT", 5001)),
     )

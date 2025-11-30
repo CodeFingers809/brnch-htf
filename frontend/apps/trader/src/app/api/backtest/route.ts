@@ -6,8 +6,13 @@ const schema = z.object({
     exitStrategy: z.string().min(3),
     stocks: z.array(z.string()).min(1),
     capital: z.number().default(50000),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
+    period: z.string().default("2y"),
+    riskProfile: z
+        .object({
+            stopLoss: z.number().min(1).max(50).default(5),
+            takeProfit: z.number().min(1).max(100).default(10),
+        })
+        .optional(),
 });
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5001";
@@ -24,7 +29,14 @@ export async function POST(request: Request) {
             );
         }
 
-        const { entryStrategy, exitStrategy, stocks, capital } = parsed.data;
+        const {
+            entryStrategy,
+            exitStrategy,
+            stocks,
+            capital,
+            period,
+            riskProfile,
+        } = parsed.data;
 
         // Combine entry and exit strategies into a query for the backend
         const query = `Entry: ${entryStrategy}. Exit: ${exitStrategy}`;
@@ -38,7 +50,7 @@ export async function POST(request: Request) {
             body: JSON.stringify({
                 query,
                 tickers: stocks,
-                period: "2y",
+                period,
                 capital,
             }),
         });

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,15 @@ import {
     BarChart3,
     CandlestickChart,
     LineChart,
+    Search,
+    Loader2,
 } from "lucide-react";
 import Link from "next/link";
+
+interface SearchResult {
+    symbol: string;
+    name: string;
+}
 
 interface OrderPanelProps {
     symbol: string;
@@ -237,12 +245,68 @@ export function ChartToolbar({
     chartType,
     onChartTypeChange,
 }: ChartToolbarProps) {
+    const router = useRouter();
+    const [showSearch, setShowSearch] = useState(false);
+    const [search, setSearch] = useState("");
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+
     const timeframes = ["1m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"];
     const chartTypes = [
         { id: "candle", icon: CandlestickChart, label: "Candlestick" },
         { id: "line", icon: LineChart, label: "Line" },
         { id: "bar", icon: BarChart3, label: "Bar" },
     ];
+
+    // Search for stocks
+    useEffect(() => {
+        const searchStocks = async () => {
+            if (search.length < 1) {
+                setResults([]);
+                return;
+            }
+
+            setIsSearching(true);
+            try {
+                const response = await fetch(
+                    `/api/stocks/search?q=${encodeURIComponent(search)}`
+                );
+                const data = await response.json();
+                setResults(data.slice(0, 8));
+            } catch (error) {
+                console.error("Failed to search stocks:", error);
+                setResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        const debounce = setTimeout(searchStocks, 300);
+        return () => clearTimeout(debounce);
+    }, [search]);
+
+    // Close search dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                searchRef.current &&
+                !searchRef.current.contains(event.target as Node)
+            ) {
+                setShowSearch(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSelectStock = (selectedSymbol: string) => {
+        setShowSearch(false);
+        setSearch("");
+        router.push(`/stock/${selectedSymbol}`);
+    };
 
     return (
         <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 bg-[#12141a] border-b border-[#2d303a]/50">
@@ -254,16 +318,90 @@ export function ChartToolbar({
                 >
                     <ArrowLeft className="h-4 w-4 lg:h-5 lg:w-5 text-[#8b8f9a] hover:text-[#e8eaed]" />
                 </Link>
-                <div className="flex items-center gap-3">
-                    <span className="text-base lg:text-lg font-semibold text-[#e8eaed]">
-                        {symbol}
-                    </span>
-                    <Badge
-                        variant="outline"
-                        className="text-[10px] lg:text-xs bg-[#1a1d24] border-[#2d303a]/50 text-[#8b8f9a]"
+
+                {/* Symbol with Search Dropdown */}
+                <div ref={searchRef} className="relative">
+                    <button
+                        onClick={() => setShowSearch(!showSearch)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#1a1d24] transition-colors"
                     >
-                        NSE
-                    </Badge>
+                        <span className="text-base lg:text-lg font-semibold text-[#e8eaed]">
+                            {symbol}
+                        </span>
+                        <Badge
+                            variant="outline"
+                            className="text-[10px] lg:text-xs bg-[#1a1d24] border-[#2d303a]/50 text-[#8b8f9a]"
+                        >
+                            NSE
+                        </Badge>
+                        <ChevronDown
+                            className={cn(
+                                "h-4 w-4 text-[#8b8f9a] transition-transform",
+                                showSearch && "rotate-180"
+                            )}
+                        />
+                    </button>
+
+                    {/* Search Dropdown */}
+                    {showSearch && (
+                        <div className="absolute top-full left-0 mt-2 w-80 bg-[#1a1d24] border border-[#2d303a]/60 rounded-xl shadow-xl z-50 overflow-hidden">
+                            <div className="p-3 border-b border-[#2d303a]/40">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8b8f9a]" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search stocks..."
+                                        value={search}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
+                                        autoFocus
+                                        className="w-full h-10 pl-10 pr-4 bg-[#0c0d10] border border-[#2d303a]/50 rounded-lg text-sm text-[#e8eaed] placeholder:text-[#8b8f9a]/60 focus:border-[#6c8cff]/50 focus:outline-none focus:ring-1 focus:ring-[#6c8cff]/30"
+                                    />
+                                    {isSearching && (
+                                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6c8cff] animate-spin" />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="max-h-72 overflow-y-auto">
+                                {search.length > 0 ? (
+                                    results.length > 0 ? (
+                                        <div className="divide-y divide-[#2d303a]/30">
+                                            {results.map((result) => (
+                                                <button
+                                                    key={result.symbol}
+                                                    onClick={() =>
+                                                        handleSelectStock(
+                                                            result.symbol
+                                                        )
+                                                    }
+                                                    className="w-full px-4 py-3 text-left hover:bg-[#252730] transition-colors flex items-center justify-between"
+                                                >
+                                                    <div>
+                                                        <div className="text-sm font-medium text-[#e8eaed]">
+                                                            {result.symbol}
+                                                        </div>
+                                                        <div className="text-xs text-[#8b8f9a]">
+                                                            {result.name}
+                                                        </div>
+                                                    </div>
+                                                    <Plus className="h-4 w-4 text-[#8b8f9a]" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : !isSearching ? (
+                                        <div className="p-4 text-center text-sm text-[#8b8f9a]">
+                                            No results found
+                                        </div>
+                                    ) : null
+                                ) : (
+                                    <div className="p-4 text-center text-sm text-[#8b8f9a]">
+                                        Type to search for stocks
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
