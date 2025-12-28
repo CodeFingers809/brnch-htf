@@ -1,185 +1,139 @@
-# FinSim - AI-Powered Trading Strategy Platform 🚀
+# FinSim 🚀  
+### **The Intelligent Financial Simulation Engine**  
+**Hack This Fall 2025 Submission by Team *brnch***
 
-A full-stack financial simulation platform for backtesting trading strategies, optimizing portfolios, and analyzing stock performance using AI-powered insights.
+---
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.10+-green.svg)
-![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
+![FinSim Banner](https://img.shields.io/badge/Status-Hackathon_Prototype-blue?style=for-the-badge) 
+![Tech Stack](https://img.shields.io/badge/Stack-Next.js_|_Flask_|_Gemini-green?style=for-the-badge)
 
-## ✨ Features
+## 📖 Introduction
 
-### 📈 AI-Powered Backtesting
-- **Natural Language Strategy Input**: Describe your trading strategy in plain English
-- **LLM-Generated Code**: Gemini AI converts your strategy to executable Python code
-- **Multi-Asset Testing**: Backtest across multiple stocks simultaneously
-- **Pre-built Market Baskets**: NIFTY 50, SENSEX 30, IT Sector, Banking, Pharma, Auto sectors
-- **Comprehensive Metrics**: Sharpe ratio, max drawdown, win rate, profit factor
-- **AI Analysis**: Automated verification and improvement recommendations
+**FinSim** is a comprehensive **financial simulation platform** designed to bridge the gap between complex quantitative analysis and everyday investors. 
 
-### 💼 Portfolio Optimization
-- **Multiple Strategies**: Min Risk, Max Sharpe, HRP (Hierarchical Risk Parity), Kelly Criterion
-- **Advanced Metrics**: VaR, CVaR, diversification ratio, effective assets
-- **Risk Analysis**: Correlation insights, concentration warnings
-- **Capital Allocation**: Optimal weight distribution across assets
+Financial markets are dynamic and unpredictable. Testing a trading idea usually requires advanced Python skills to build rigorous simulations. **FinSim changes that.** We allow anyone to describe a trading strategy or market scenario in **plain English**, and our AI agent instantly converts it into executable code.
 
-### 📊 Stock Research & Analysis
-- **Real-time Data**: Live stock prices via Yahoo Finance
-- **Financial Statements**: Balance sheets, cash flow, income statements
-- **Interactive Charts**: TradingView-style candlestick charts
-- **Watchlist Management**: MongoDB-backed persistent watchlists
-- **Stock Search**: Search across NSE/BSE listed stocks
+We don't just "backtest"—we **simulate**. Whether it's validating a strategy against historical data or running stress tests, FinSim provides the tools to understand market behavior without writing a single line of code.
 
-### 🤖 Agentic RAG Research
-- **AI Research Assistant**: Query financial documents and market data
-- **Vector Search**: Semantic search across financial knowledge base
-- **Contextual Insights**: AI-powered analysis with source citations
+> **"If you can speak it, you can simulate it."**
 
-## 🏗️ Architecture
+---
 
+## 🌟 Key Features (USP)
+
+### 🗣️ **English-to-Simulation Engine**
+This is the core of FinSim. We treat simulations as a language problem.
+1.  **You type:** *"Buy Apple stock when the RSI is below 30 and price is above the 200-day moving average. Run a Monte Carlo simulation to stress test this."*
+2.  **FinSim acts:**
+    *   **Translates** your text into a robust Python simulation strategy.
+    *   **Fetches** high-fidelity historical market data.
+    *   **Executes** the simulation (Backtesting, Monte Carlo, etc.) to validate performance across different market conditions.
+    *   **Reports** Profit/Loss, Win Rate, Drawdowns, and probabilistic outcomes.
+
+### 🧠 **AI-Powered Analysis**
+We don't just dump numbers on you. An AI Agent reviews your simulation results and provides:
+*   **Verification:** Was this actually a robust strategy, or did you just get lucky?
+*   **Recommendations:** Actionable tips to improve your strategy (e.g., "Try tightening your stop-loss to reduce drawdown").
+
+### 📚 **Agentic RAG (Financial Search)**
+An advanced search engine that lets you query financial documents and verified stock data to get accurate, sourced answers before you design your simulation.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+FinSim is built as a modern, high-performance web application.
+
+### **The Stack**
+*   **Frontend:** [Next.js](https://nextjs.org/) (React) with Tailwind CSS & Shadcn UI for a beautiful, responsive dashboard.
+*   **Backend:** [Flask](https://flask.palletsprojects.com/) (Python) serving as the orchestration layer.
+*   **AI Intelligence:** [Google Gemini](https://deepmind.google/technologies/gemini/) (Pro & Flash models) for code generation and data analysis.
+*   **Data Engine:** `yfinance` for market data, `backtesting.py` for simulation logic, and `Qdrant` for vector search.
+
+### **System Flow**
+
+```mermaid
+graph TD
+    User[User] -->|1. Enters Simulation Request| FE[Next.js Frontend]
+    FE -->|2. POST /backtest| API[Flask Backend]
+    
+    subgraph "AI Core"
+        API -->|3. Prompt Engineering| LLM[Gemini AI]
+        LLM -->|4. Generates Simulation Code| API
+    end
+    
+    subgraph "Simulation Engine"
+        API -->|5. Compiles Strategy| Sim[Simulation Engine]
+        Data[(Market Data)] -->|6. Historical Prices| Sim
+        Sim -->|7. Runs Backtest / Monte Carlo| Results[Metrics & Equity Curve]
+    end
+    
+    subgraph "Analysis Layer"
+        Results -->|8. Raw Stats| Analyst[AI Analyst Agent]
+        Analyst -->|9. Insights & Tips| API
+    end
+    
+    API -->|10. JSON Response| FE
+    FE -->|11. Visualizes Results| User
 ```
-├── backend/                 # Python Flask API
-│   ├── app/
-│   │   ├── routes/
-│   │   │   ├── backtest.py     # AI backtesting engine
-│   │   │   ├── optimize.py     # Portfolio optimization
-│   │   │   ├── simulate.py     # Trading simulation
-│   │   │   ├── stocks.py       # Stock data & search
-│   │   │   ├── fetch.py        # Financial statements
-│   │   │   └── agentic_rag.py  # AI research assistant
-│   │   └── data_lake/          # Vector DB & documents
-│   └── run.py
-│
-├── frontend/                # Next.js 15 Monorepo
-│   ├── apps/trader/        # Main trading application
-│   │   ├── src/
-│   │   │   ├── app/        # App router pages
-│   │   │   ├── components/ # React components
-│   │   │   └── lib/        # Utilities & services
-│   └── packages/           # Shared packages
-│       ├── ui/             # UI components
-│       ├── types/          # TypeScript types
-│       └── config/         # Shared configs
-```
+
+---
 
 ## 🚀 Getting Started
 
+To run FinSim locally, follow these steps:
+
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- pnpm (recommended) or npm
-- MongoDB (optional, for watchlists)
+*   Node.js (v18+)
+*   Python (v3.9+)
+*   Google Gemini API Key
 
-### Backend Setup
+### Installation
 
-```bash
-cd backend
+1.  **Clone the repo**
+    ```bash
+    git clone https://github.com/your-repo/finsim.git
+    cd finsim
+    ```
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+2.  **Backend Setup**
+    ```bash
+    cd backend
+    python -m venv .venv
+    source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+    pip install -r requirements.txt
+    
+    # Create .env file and add your GOOGLE_API_KEY
+    echo "GOOGLE_API_KEY=your_key_here" > .env
+    
+    python run.py
+    ```
 
-# Install dependencies
-pip install -r requirements.txt
+3.  **Frontend Setup**
+    ```bash
+    cd ../frontend/apps/trader
+    pnpm install
+    pnpm dev
+    ```
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys:
-# - GOOGLE_API_KEY (for Gemini AI)
+4.  **Open your browser** to `http://localhost:3000`
 
-# Run the server
-python run.py
-```
+---
 
-The API will be available at `http://localhost:5001`
+## ⚠️ Disclaimer
 
-### Frontend Setup
+**FinSim is a hackathon project created for educational and demonstration purposes only.**
 
-```bash
-cd frontend
+*   We are **not** financial advisors.
+*   The simulations and AI insights provided by this tool should **never** be taken as financial advice.
+*   Simulations are based on historical data and do not guarantee future performance.
+*   Trading stocks involves risk, and you can lose money. Always do your own research.
 
-# Install dependencies
-pnpm install
+---
 
-# Set up environment variables
-cp apps/trader/.env.local.example apps/trader/.env.local
-# Edit with your configuration
+### Team *brnch*
+*   **Ayush Bohra** - AI & ML
+*   **Pradyut Das** - Full Stack
+*   **Rishabh Jain** - Cloud & DevOps
 
-# Run development server
-pnpm dev
-```
-
-The app will be available at `http://localhost:3000`
-
-## 🔧 API Endpoints
-
-### Backtesting
-```
-POST /backtest
-{
-  "query": "Buy when RSI < 30 and price above 200 SMA, sell when RSI > 70",
-  "tickers": ["RELIANCE.NS", "TCS.NS", "INFY.NS"],
-  "period": "2y",
-  "capital": 10000
-}
-```
-
-### Portfolio Optimization
-```
-POST /optimize
-{
-  "tickers": ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS"],
-  "capital": 100000
-}
-```
-
-### Stock Search
-```
-GET /stocks/search?q=reliance
-```
-
-### Financial Data
-```
-GET /fetch/balance-sheet?ticker=RELIANCE.NS
-GET /fetch/cash-flow?ticker=RELIANCE.NS
-GET /fetch/income-statement?ticker=RELIANCE.NS
-```
-
-## 📦 Tech Stack
-
-### Backend
-- **Flask** - Web framework
-- **yfinance** - Stock data
-- **backtesting.py** - Strategy backtesting
-- **scipy** - Portfolio optimization
-- **Google Gemini** - AI strategy generation
-- **LangChain** - RAG pipeline
-
-### Frontend
-- **Next.js 15** - React framework
-- **TypeScript** - Type safety
-- **TailwindCSS** - Styling
-- **Recharts** - Charts
-- **TanStack Query** - Data fetching
-- **Mongoose** - MongoDB ODM
-
-## 🔐 Environment Variables
-
-### Backend (`backend/.env`)
-```env
-GOOGLE_API_KEY=your_gemini_api_key
-```
-
-### Frontend (`frontend/apps/trader/.env.local`)
-```env
-MONGODB_URI=your_mongodb_connection_string
-NEXT_PUBLIC_API_URL=http://localhost:5001
-```
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+*Built with 💻 and ☕ for Hack This Fall 2025.*
