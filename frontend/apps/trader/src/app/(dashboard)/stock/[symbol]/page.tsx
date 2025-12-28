@@ -56,6 +56,24 @@ export default async function StockPage({
     const { symbol: symbolParam } = await params;
     const symbol = symbolParam.toUpperCase();
 
+    // Helper function to convert date to yyyy-mm-dd format
+    const formatDateForChart = (dateString: string): string => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                console.warn(`Invalid date: ${dateString}`);
+                return dateString;
+            }
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error(`Error formatting date ${dateString}:`, error);
+            return dateString;
+        }
+    };
+
     try {
         const [quote, profile, chartData] = await Promise.all([
             fetchQuote(symbol),
@@ -64,7 +82,7 @@ export default async function StockPage({
         ]);
 
         const candles: CandlestickData[] = chartData.map((candle: any) => ({
-            time: candle.date || candle.time,
+            time: formatDateForChart(candle.date || candle.time),
             open: candle.open,
             high: candle.high,
             low: candle.low,
@@ -72,7 +90,7 @@ export default async function StockPage({
         }));
 
         const volumes: HistogramData[] = chartData.map((candle: any) => ({
-            time: candle.date || candle.time,
+            time: formatDateForChart(candle.date || candle.time),
             value: candle.volume,
             color:
                 candle.close >= candle.open

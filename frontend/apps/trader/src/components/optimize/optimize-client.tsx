@@ -283,7 +283,7 @@ export function OptimizeClient() {
                 )
             }
         >
-            <div className="flex-1 flex flex-col bg-[#0c0d10] overflow-hidden">
+            <div className="flex-1 flex flex-col bg-[#0c0d10]">
                 {/* Input Form */}
                 {!result && (
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -914,7 +914,7 @@ export function OptimizeClient() {
                                                                 <span className="text-xs text-[#e8eaed] w-28 truncate">
                                                                     {ticker}
                                                                 </span>
-                                                                <div className="flex-1 h-2 bg-[#1a1d24] rounded-full overflow-hidden">
+                                                                <div className="flex-1 h-2 bg-[#1a1d24] rounded-full overflow-scroll">
                                                                     <div
                                                                         className="h-full bg-[#f0b86c] rounded-full transition-all duration-500"
                                                                         style={{

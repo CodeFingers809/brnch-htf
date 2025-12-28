@@ -37,7 +37,7 @@ export function TerminalLayout({
     const isOptimize = pathname?.includes("/optimize");
 
     return (
-        <div className="fixed inset-0 z-50 bg-[#0c0d10] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-[#0c0d10] flex flex-col overflow-auto">
             {/* Top Toolbar - Consistent across Research and Backtesting */}
             <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 bg-[#12141a] border-b border-[#2d303a]/50">
                 {/* Left Side - Navigation */}
@@ -147,7 +147,7 @@ export function TerminalLayout({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden">{children}</div>
+            <div className="flex-1">{children}</div>
         </div>
     );
 }

@@ -146,10 +146,28 @@ export function StockPageClient({
         staleTime: 60000, // 1 minute
     });
 
+    // Helper function to convert date to yyyy-mm-dd format
+    const formatDateForChart = (dateString: string): string => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                console.warn(`Invalid date: ${dateString}`);
+                return dateString;
+            }
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error(`Error formatting date ${dateString}:`, error);
+            return dateString;
+        }
+    };
+
     // Process chart data
     const candles: CandlestickData[] = chartQuery.data?.length
         ? chartQuery.data.map((candle: any) => ({
-              time: candle.date || candle.time,
+              time: formatDateForChart(candle.date || candle.time),
               open: candle.open,
               high: candle.high,
               low: candle.low,
@@ -159,7 +177,7 @@ export function StockPageClient({
 
     const volumes: HistogramData[] = chartQuery.data?.length
         ? chartQuery.data.map((candle: any) => ({
-              time: candle.date || candle.time,
+              time: formatDateForChart(candle.date || candle.time),
               value: candle.volume,
               color:
                   candle.close >= candle.open
@@ -200,7 +218,7 @@ export function StockPageClient({
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-[#0c0d10] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-[#0c0d10] flex flex-col overflow-auto">
             {/* Top Toolbar */}
             <ChartToolbar
                 symbol={activeSymbol}
@@ -211,7 +229,7 @@ export function StockPageClient({
             />
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col overflow-hidden relative">
+            <div className="flex-1 flex flex-col overflow-auto relative">
                 {/* Top Section: Left Panel + Chart + Right Panel */}
                 <div className="flex-1 flex overflow-hidden">
                     {/* Left Info Panel Sidebar with ScrollArea */}
