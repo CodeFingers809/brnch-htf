@@ -187,10 +187,13 @@ We are a team of passionate developers building at the intersection of Finance a
 
 *   **Ayush Bohra** - *AI & Machine Learning*
     *   Designed the Agentic workflows, RAG pipeline, and Strategy Generation logic.
+*   **Krishnan Venkiteswaran** - *AI & Machine Learning*
+    *   Designed the Agentic workflows, RAG pipeline, and Strategy Generation logic.
 *   **Pradyut Das** - *Full Stack Engineering*
     *   Built the responsive Next.js frontend, interactive charting, and seamless API integration.
 *   **Rishabh Jain** - *Cloud & DevOps*
     *   Managed the system architecture, scripting and automation.
+
 
 ---
 
